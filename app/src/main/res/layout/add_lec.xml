@@ -38,14 +38,14 @@
         android:src="@drawable/ic_file_upload_white_24dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/button"
+        android:id="@+id/upload"
         style="@style/Widget.AppCompat.Button.Colored"
         />
     <ImageButton
         android:src="@drawable/ic_videocam_white_24dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/button2"
+        android:id="@+id/record"
         style="@style/Widget.AppCompat.Button.Colored"
         />
 
