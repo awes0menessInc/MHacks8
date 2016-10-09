@@ -16,11 +16,19 @@ public class LectureDetail extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.lecturedetailactivity);
 
+        String value;
+        Bundle extras = getIntent().getExtras();
+        if (extras != null)
+        {
+            value = extras.get("key").toString();
+        }
+        else
+            value = null;
+
         VideoView vid = (VideoView) findViewById(R.id.videoView);
-        vid.setVideoPath("");
+        vid.setVideoPath(value);
         vid.setMediaController(new MediaController(this));
         vid.start();
-
 
     }
 
