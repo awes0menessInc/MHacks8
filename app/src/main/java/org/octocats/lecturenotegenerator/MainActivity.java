@@ -13,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -67,6 +68,13 @@ public class MainActivity extends AppCompatActivity {
                 ActivityCompat.startActivity(MainActivity.this, intent, null);
             }
         });
+
+        summary s = new summary();
+        try {
+            Log.e(TAG,s.chut("title","text is bad. I am good. India is a country. I don't know what to say."));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private final LecListAdapter.OnItemClickListener onItemClickListener = new LecListAdapter.OnItemClickListener() {
