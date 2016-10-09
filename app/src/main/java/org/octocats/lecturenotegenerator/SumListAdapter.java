@@ -32,7 +32,9 @@ public class SumListAdapter extends RecyclerView.Adapter<SumListAdapter.ViewHold
     @Override
     public void onBindViewHolder(SumListAdapter.ViewHolder holder, int position) {
         holder.summary.setText(summaries.get(position));
-        holder.time.setText(""+times.get(position));
+        if(position < times.size()){
+            holder.time.setText("" + Math.round(times.get(position)));
+        }
     }
 
     @Override
@@ -47,7 +49,7 @@ public class SumListAdapter extends RecyclerView.Adapter<SumListAdapter.ViewHold
 
         public ViewHolder(View itemView) {
             super(itemView);
-            time = (TextView) itemView.findViewById(R.id.time);
+            time = (TextView) itemView.findViewById(R.id.timeStamp);
             summary = (TextView) itemView.findViewById(R.id.textPoint);
         }
 
