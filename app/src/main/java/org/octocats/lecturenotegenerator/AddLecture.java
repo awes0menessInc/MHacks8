@@ -1,19 +1,31 @@
 package org.octocats.lecturenotegenerator;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageButton;
 
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.JsonHttpResponseHandler;
+import com.loopj.android.http.RequestParams;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.UnsupportedEncodingException;
+import java.util.concurrent.TimeUnit;
+
+import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.entity.StringEntity;
 
 import static android.content.ContentValues.TAG;
 
@@ -21,10 +33,13 @@ import static android.content.ContentValues.TAG;
 /**
  * Created by nisarg on 8/10/16.
  */
-public class AddLecture extends Activity {
+public class AddLecture extends AppCompatActivity {
 
     static final int REQUEST_VIDEO_CAPTURE = 1;
     static final int REQUEST_TAKE_GALLERY_VIDEO = 2;
+
+    private EditText title;
+    private String titleTxt = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +48,9 @@ public class AddLecture extends Activity {
 
         ImageButton uploadBtn = (ImageButton) findViewById(R.id.upload);
         ImageButton recordBtn = (ImageButton) findViewById(R.id.record);
+
+        title = (EditText) findViewById(R.id.title);
+        titleTxt = ""+title.getText();
 
         recordBtn.setOnClickListener(new View.OnClickListener()
         {
@@ -71,7 +89,7 @@ public class AddLecture extends Activity {
                 Uri selectedImageUri = data.getData();
 
                 // OI FILE Manager
-                String filemanagerstring = selectedImageUri.getPath();
+                final String filemanagerstring = selectedImageUri.getPath();
 
                 // MEDIA GALLERY
                 String selectedImagePath = getPath(selectedImageUri);
@@ -81,20 +99,270 @@ public class AddLecture extends Activity {
                             VideoplayAvtivity.class);
                     intent.putExtra("path", selectedImagePath);
                     startActivity(intent);*/
-                    File f = new File(""+data.getData());
+                    File f = new File(selectedImagePath);
                     String imageName = f.getName();
-                    Log.e(TAG,imageName);
+                    Log.e(TAG,"lk"+imageName);
+
+                    AsyncHttpClient client = new AsyncHttpClient();
+                    RequestParams params = new RequestParams();
+                    try {
+                        params.put("userPhoto", f);
+                    } catch(FileNotFoundException e) {}
+
+                    client.post("http://nisarg.me:3000/api/photo", params, new AsyncHttpResponseHandler() {
+                        @Override
+                        public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                            String str = "";
+                            try {
+                                str = new String(responseBody, "UTF-8");
+                            } catch (UnsupportedEncodingException e) {
+                                e.printStackTrace();
+                            }
+                            JSONObject json = new JSONObject();
+                            try {
+                                json = new JSONObject(str);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            String filename = "";
+                            try {
+                                Log.e(TAG, "success " + json.getString("filename"));
+                                filename = json.getString("filename");
+
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+
+                            AsyncHttpClient client = new AsyncHttpClient();
+                            client.addHeader("Content-Type","application/json");
+                            RequestParams params = new RequestParams();
+
+                            JSONObject jsonParam = new JSONObject();
+                            try {
+                                jsonParam.put("action", "index_content");
+                                jsonParam.put("userID", "1475952683-484e4700-3a91-4ee3-8344-125b3f259469-8693430633199653278155461417427");
+                                jsonParam.put("data_url", "http://nisarg.me:3000/uploads/" + filename);
+                                StringEntity entity = new StringEntity(jsonParam.toString());
+                                Log.e(TAG, params.toString());
+
+                                client.post(getApplicationContext(), "http://api.deepgram.com/", entity, "application/json", new JsonHttpResponseHandler() {
+                                    @Override
+                                    public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                                        Log.e(TAG, response.toString());
+
+                                        AsyncHttpClient client = new AsyncHttpClient();
+                                        JSONObject jsonRes = null;
+                                        try {
+                                            jsonRes = new JSONObject(response.toString());
+                                        } catch (JSONException e) {
+                                            e.printStackTrace();
+                                        }
+
+                                        JSONObject jsonParam = new JSONObject();
+                                        StringEntity entity = null;
+                                        try {
+                                            jsonParam.put("action", "get_object_status");
+                                            jsonParam.put("userID", "1475952683-484e4700-3a91-4ee3-8344-125b3f259469-8693430633199653278155461417427");
+                                            jsonParam.put("contentID", jsonRes.getString("contentID"));
+                                            entity = new StringEntity(jsonParam.toString());
+                                            final String contentID  = jsonRes.getString("contentID");
+
+                                            checkAPI(contentID);
+
+                                        } catch (Exception e){
+                                            Log.e(TAG, e.toString());
+                                        }
+
+                                    }
+
+                                    @Override
+                                    public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
+                                        // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                                        Log.e(TAG, "" + statusCode);
+                                        Log.e(TAG, res.toString());
+
+                                    }
+                                });
+                            } catch (Exception e) {
+                                Log.e(TAG, e.toString());
+                            }
 
 
-                    //UploadFile(selectedImageUri.toString());
+                        }
+
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                            String str = "";
+
+                            Log.e(TAG, "fail " + error.toString());
+                        }
+                    });
                 }
             } else if(requestCode == REQUEST_VIDEO_CAPTURE){
-                String videoPath = data.getData().getPath();
+                String videoPath = getPath(data.getData());
                 File f = new File(videoPath);
                 String imageName = f.getName();
                 Log.e(TAG,imageName);
+
+
+
             }
         }
+    }
+
+
+    public void checkAPI(String contentID) throws JSONException, UnsupportedEncodingException {
+        AsyncHttpClient client = new AsyncHttpClient();
+
+        JSONObject jsonParam = new JSONObject();
+        StringEntity entity = null;
+
+        jsonParam.put("action", "get_object_status");
+        jsonParam.put("userID", "1475952683-484e4700-3a91-4ee3-8344-125b3f259469-8693430633199653278155461417427");
+        jsonParam.put("contentID", contentID);
+        entity = new StringEntity(jsonParam.toString());
+
+        final String contentIDCopy = contentID;
+
+        client.post(getApplicationContext(), "http://api.deepgram.com/", entity, "application/json", new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                Log.e(TAG, response.toString());
+                try {
+                    if (!response.getString("status").equals("done")) {
+                        TimeUnit.SECONDS.sleep(10);
+                        checkAPI(contentIDCopy);
+                    } else {
+                        getTranscript(contentIDCopy);
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, e.toString());
+                }
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
+                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                Log.e(TAG, "" + statusCode);
+                Log.e(TAG, res.toString());
+
+            }
+        });
+
+    }
+
+    public void getTranscript(String contentID) throws JSONException, UnsupportedEncodingException {
+        AsyncHttpClient client = new AsyncHttpClient();
+        JSONObject jsonParam = new JSONObject();
+        jsonParam.put("action", "get_object_transcript");
+        jsonParam.put("userID", "1475952683-484e4700-3a91-4ee3-8344-125b3f259469-8693430633199653278155461417427");
+        jsonParam.put("contentID", contentID);
+        StringEntity entity = new StringEntity(jsonParam.toString());
+
+        client.post(getApplicationContext(), "http://api.deepgram.com/", entity, "application/json", new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                try {
+                    String txt = "";
+                    for(int i = 0; i < response.getJSONArray("paragraphs").length(); i++){
+                        txt += response.getJSONArray("paragraphs").get(i).toString();
+                        txt += "\n";
+                    }
+                    getSummary(titleTxt, txt);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
+                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                Log.e(TAG, "" + statusCode);
+                Log.e(TAG, res.toString());
+
+            }
+        });
+    }
+
+    /*public boolean checkStatus(final AsyncHttpClient client, final JSONObject jsonRes) {
+        JSONObject jsonParam = new JSONObject();
+        StringEntity entity = null;
+        try {
+            jsonParam.put("action", "get_object_status");
+            jsonParam.put("userID", "1475952683-484e4700-3a91-4ee3-8344-125b3f259469-8693430633199653278155461417427");
+            jsonParam.put("contentID", jsonRes.getString("contentID"));
+            entity = new StringEntity(jsonParam.toString());
+            final Boolean[] done = new Boolean[1];
+
+
+            client.post(getApplicationContext(), "http://api.deepgram.com/", entity, "application/json", new JsonHttpResponseHandler() {
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                    Log.e(TAG, response.toString());
+                    try {
+                        if (response.getString("status").equals("")) {
+                            TimeUnit.SECONDS.sleep(10);
+                            if (checkStatus(client, jsonRes));
+                        } else {
+                            done[0] = new Boolean(true);
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, e.toString());
+                    }
+                }
+
+                @Override
+                public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
+                    // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                    Log.e(TAG, "" + statusCode);
+                    Log.e(TAG, res.toString());
+
+                }
+            });
+            return done[0];
+        } catch (Exception e){
+            Log.e(TAG, e.toString());
+        }
+    }
+    */
+
+    public String getSummary(String title, String text)/* throws Exception */{
+        final String BASE_URL = "https://api.aylien.com/api/v1/summarize";
+        final String val[] = new String[1];
+        val[0] = new String();
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.addHeader("X-AYLIEN-TextAPI-Application-Key","6521a17eaa666450c6e6f70f25924c96");
+        client.addHeader("X-AYLIEN-TextAPI-Application-ID","f470587a");
+        client.addHeader("Accept","application/json");
+        RequestParams paramMap = new RequestParams();
+        paramMap.put("title",title);
+        paramMap.put("text",text);
+        paramMap.put("sentences_percentage",30);
+
+        client.post(BASE_URL, paramMap, new AsyncHttpResponseHandler() {
+            String str;
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+
+                try {
+                    str = new String(responseBody, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+
+                val[0] = str;
+                Log.e(TAG, "success" + str);
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                Log.e(TAG, "failure" + str);
+            }
+        });
+
+
+
+        return val[0];
     }
 
     // UPDATED!
@@ -110,21 +378,5 @@ public class AddLecture extends Activity {
             return cursor.getString(column_index);
         } else
             return null;
-    }
-
-
-    public void UploadFile(String fileName){
-        try {
-            // Set your file path here
-            FileInputStream fstrm = new FileInputStream(Environment.getExternalStorageDirectory().toString()+"/DCIM/"+fileName);
-
-            // Set your server page url (and the file title/description)
-            HttpFileUpload hfu = new HttpFileUpload("http://nisarg.me:3000/api/photo/", fileName);
-
-            hfu.Send_Now(fstrm);
-
-        } catch (FileNotFoundException e) {
-            // Error: File not found
-        }
     }
 }
