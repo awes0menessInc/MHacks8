@@ -1,12 +1,15 @@
 package org.octocats.lecturenotegenerator;
 
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+
+import static android.content.ContentValues.TAG;
 
 /**
  * Created by nisarg on 9/10/16.
@@ -21,6 +24,7 @@ public class SumListAdapter extends RecyclerView.Adapter<SumListAdapter.ViewHold
     public SumListAdapter(ArrayList<String> summaries, ArrayList<Double> times){
         this.summaries = summaries;
         this.times = times;
+        Log.e(TAG, times.toString());
     }
 
     @Override
@@ -33,7 +37,7 @@ public class SumListAdapter extends RecyclerView.Adapter<SumListAdapter.ViewHold
     public void onBindViewHolder(SumListAdapter.ViewHolder holder, int position) {
         holder.summary.setText(summaries.get(position));
         if(position < times.size()){
-            holder.time.setText("" + Math.round(times.get(position)));
+            holder.time.setText("" + times.get(position));
         }
     }
 

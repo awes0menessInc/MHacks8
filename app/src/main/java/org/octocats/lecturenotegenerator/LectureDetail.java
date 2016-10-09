@@ -6,8 +6,6 @@ import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
-import android.widget.AbsoluteLayout;
-import android.widget.MediaController;
 import android.widget.VideoView;
 
 import com.loopj.android.http.AsyncHttpClient;
@@ -93,20 +91,23 @@ public class LectureDetail extends Activity
                     client.post(getApplicationContext(), "http://api.deepgram.com/", entity, "application/json", new JsonHttpResponseHandler() {
                         @Override
                         public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                            double d = 0.0;
                             try {
                                 Log.e(TAG,""+response.toString());
                                 Log.e(TAG,""+response.getJSONArray("startTime").get(0));
-                                addToTimes(Double.parseDouble(response.getJSONArray("startTime").get(0).toString()));
+                                d = Double.parseDouble(""+response.getJSONArray("startTime").get(0));
                             } catch (JSONException e) {
-                                addToTimes(0.0);
+                                Log.e(TAG, e.toString());
                                 e.printStackTrace();
                             }
+
+                            addToTimes(d);
+
                         }
 
                         @Override
                         public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
                             // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                            addToTimes(0.0);
                             Log.e(TAG, "" + statusCode);
                             Log.e(TAG, res.toString());
 
