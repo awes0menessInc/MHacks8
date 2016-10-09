@@ -45,6 +45,8 @@ public class AddLecture extends AppCompatActivity {
     private Uri videoUri;
 
     private static String USERID = "1476010302-f9f306e3-773b-4252-832e-dd09172f02f4-1946553840890124384591255084455";
+    private static JSONObject transcript;
+    private String contentID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -170,7 +172,7 @@ public class AddLecture extends AppCompatActivity {
                                             jsonParam.put("userID", USERID);
                                             jsonParam.put("contentID", jsonRes.getString("contentID"));
                                             entity = new StringEntity(jsonParam.toString());
-                                            final String contentID  = jsonRes.getString("contentID");
+                                            contentID  = jsonRes.getString("contentID");
 
                                             checkAPI(contentID);
 
@@ -273,6 +275,7 @@ public class AddLecture extends AppCompatActivity {
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
                 try {
                     Log.e(TAG, response.toString());
+                    transcript = response;
                     String txt = "";
                     for(int i = 0; i < response.getJSONArray("paragraphs").length(); i++){
                         txt += response.getJSONArray("paragraphs").get(i).toString();
@@ -331,6 +334,8 @@ public class AddLecture extends AppCompatActivity {
                 i.putExtra("FILENAME", videoName);
                 i.putExtra("URI", videoUri.toString());
                 i.putExtra("TEXT_SUMMARY", str);
+                i.putExtra("TRANSCRIPT", transcript.toString());
+                i.putExtra("CONTENT_ID", contentID);
                 ActivityCompat.startActivity(AddLecture.this, i, null
                 );
 

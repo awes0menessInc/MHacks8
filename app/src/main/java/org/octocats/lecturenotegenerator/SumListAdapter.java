@@ -1,6 +1,7 @@
 package org.octocats.lecturenotegenerator;
 
 import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -15,22 +16,23 @@ public class SumListAdapter extends RecyclerView.Adapter<SumListAdapter.ViewHold
 
     private OnItemClickListener mItemClickListener;
     private ArrayList<String> summaries = new ArrayList<>();
-    private ArrayList<String> dates = new ArrayList<>();
+    private ArrayList<Double> times = new ArrayList<>();
 
-    public SumListAdapter(ArrayList<String> summaries, ArrayList<String> dates){
+    public SumListAdapter(ArrayList<String> summaries, ArrayList<Double> times){
         this.summaries = summaries;
-        this.dates = dates;
+        this.times = times;
     }
 
     @Override
     public SumListAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return null;
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.summary_item, parent, false);
+        return new ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(SumListAdapter.ViewHolder holder, int position) {
-        holder.time.setText(summaries.get(position));
-        holder.summary.setText(dates.get(position));
+        holder.summary.setText(summaries.get(position));
+        holder.time.setText(""+times.get(position));
     }
 
     @Override
