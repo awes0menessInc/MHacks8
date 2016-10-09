@@ -93,6 +93,16 @@ public class AddLecture extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         Log.e(TAG,data.getDataString());
         if (resultCode == RESULT_OK) {
+
+
+            ProgressDialog dialog = ProgressDialog.show(AddLecture.this, "",
+                    "Loading. Please wait...", true);
+
+
+
+
+
+
             if (requestCode == REQUEST_TAKE_GALLERY_VIDEO) {
                 videoUri = data.getData();
 
@@ -191,8 +201,7 @@ public class AddLecture extends AppCompatActivity {
 
                                     }
                                 });
-                                ProgressDialog dialog = ProgressDialog.show(AddLecture.this, "",
-                                        "Loading. Please wait...", true);
+
                             } catch (Exception e) {
                                 Log.e(TAG, e.toString());
                             }
