@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
+import android.widget.AbsoluteLayout;
 import android.widget.MediaController;
 import android.widget.VideoView;
 
@@ -40,10 +41,16 @@ public class LectureDetail extends Activity
             Log.e(TAG, textSummary.toString());
         } catch (JSONException e) {e.printStackTrace();}
 
+
+
+
         VideoView vid = (VideoView) findViewById(R.id.videoView);
         vid.setVideoURI(Uri.parse(value));
-        vid.setMediaController(new MediaController(this));
+        //vid.setMediaController(new MediaController(this));
         vid.start();
+
+
+
         JSONArray sentences = new JSONArray();
         try {
             sentences = textSummary.getJSONArray("sentences");
