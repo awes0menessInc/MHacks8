@@ -278,6 +278,7 @@ public class AddLecture extends AppCompatActivity {
                         txt += response.getJSONArray("paragraphs").get(i).toString();
                         txt += "\n";
                     }
+                    Log.e(TAG, txt);
                     getSummary(titleTxt, txt);
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -329,6 +330,7 @@ public class AddLecture extends AppCompatActivity {
                 Intent i = new Intent(AddLecture.this, LectureDetail.class);
                 i.putExtra("FILENAME", videoName);
                 i.putExtra("URI", videoUri.toString());
+                i.putExtra("TEXT_SUMMARY", str);
                 ActivityCompat.startActivity(AddLecture.this, i, null
                 );
 
