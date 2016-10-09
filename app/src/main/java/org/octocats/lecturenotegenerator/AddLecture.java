@@ -24,7 +24,6 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
-import java.util.concurrent.TimeUnit;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.StringEntity;
@@ -53,7 +52,6 @@ public class AddLecture extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.add_lec);
-
         ImageButton uploadBtn = (ImageButton) findViewById(R.id.upload);
         ImageButton recordBtn = (ImageButton) findViewById(R.id.record);
 
@@ -252,7 +250,7 @@ public class AddLecture extends AppCompatActivity {
                     if(response.getString("status").equals("failed_fetch")) {
                         Log.e(TAG, "FAIL");
                     } else if (!response.getString("status").equals("done")) {
-                        TimeUnit.SECONDS.sleep(10);
+                        //TimeUnit.SECONDS.sleep(10);
                         checkAPI(contentIDCopy);
                     }
                     else {

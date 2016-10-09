@@ -1,11 +1,15 @@
 package org.octocats.lecturenotegenerator;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
+import android.view.View;
+import android.widget.MediaController;
 import android.widget.VideoView;
 
 import com.loopj.android.http.AsyncHttpClient;
@@ -17,6 +21,7 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.StringEntity;
@@ -32,10 +37,10 @@ public class LectureDetail extends Activity
     private RecyclerView mRecyclerView;
     private StaggeredGridLayoutManager mStaggeredLayoutManager;
     private SumListAdapter mAdapter;
-
+    private VideoView vid;
     ArrayList<String> sums = new ArrayList<>();
 
-    ArrayList<Double> times = new ArrayList<>();
+    HashMap<Integer,String> times = new HashMap<>();
 
     public void onCreate(Bundle savedInstanceState)
     {
@@ -56,9 +61,9 @@ public class LectureDetail extends Activity
 
 
 
-        VideoView vid = (VideoView) findViewById(R.id.videoView);
+        vid = (VideoView) findViewById(R.id.videoView);
         vid.setVideoURI(Uri.parse(value));
-        //vid.setMediaController(new MediaController(this));
+        vid.setMediaController(new MediaController(this));
         vid.start();
 
 
@@ -73,53 +78,58 @@ public class LectureDetail extends Activity
                 for (int i=0;i<sentences.length();i++){
                     sums.add(sentences.getString(i));
 
+                    final int j = i;
+                    try {
+                        AsyncHttpClient client = new AsyncHttpClient();
+                        JSONObject jsonParam = new JSONObject();
 
-                    AsyncHttpClient client = new AsyncHttpClient();
-                    JSONObject jsonParam = new JSONObject();
+                        JSONObject filter = new JSONObject();
+                        filter.put("Nmax", 10);
+                        filter.put("Pmin", 0.55);
+                        jsonParam.put("action", "object_search");
+                        jsonParam.put("userID", "1476010302-f9f306e3-773b-4252-832e-dd09172f02f4-1946553840890124384591255084455");
+                        jsonParam.put("contentID", contentID);
+                        jsonParam.put("query", sentences.getString(i));
+                        jsonParam.put("filter", filter);
+                        jsonParam.put("sort", "time");
+                        StringEntity entity = new StringEntity(jsonParam.toString());
+                        client.post(getApplicationContext(), "http://api.deepgram.com/", entity, "application/json", new JsonHttpResponseHandler() {
+                            @Override
+                            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
 
-                    JSONObject filter = new JSONObject();
-                    filter.put("Nmax", 10);
-                    filter.put("Pmin", 0.55);
-                    jsonParam.put("action", "object_search");
-                    jsonParam.put("userID", "1476010302-f9f306e3-773b-4252-832e-dd09172f02f4-1946553840890124384591255084455");
-                    jsonParam.put("contentID", contentID);
-                    jsonParam.put("query", sentences.getString(i));
-                    jsonParam.put("filter", filter);
-                    jsonParam.put("sort", "time");
-                    StringEntity entity = new StringEntity(jsonParam.toString());
+                                try {
+                                    times.put(j,""+response.getJSONArray("startTime").get(0));
+                                    try {
+                                        Log.e(TAG, "" + times.toString());
+                                    } catch (Exception e){
+                                        Log.e(TAG, e.toString());
+                                    }
+                                } catch (JSONException e) {
+                                    Log.e(TAG, e.toString());
+                                    e.printStackTrace();
+                                }
 
-                    client.post(getApplicationContext(), "http://api.deepgram.com/", entity, "application/json", new JsonHttpResponseHandler() {
-                        @Override
-                        public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                            double d = 0.0;
-                            try {
-                                Log.e(TAG,""+response.toString());
-                                Log.e(TAG,""+response.getJSONArray("startTime").get(0));
-                                d = Double.parseDouble(""+response.getJSONArray("startTime").get(0));
-                            } catch (JSONException e) {
-                                Log.e(TAG, e.toString());
-                                e.printStackTrace();
+
                             }
 
-                            addToTimes(d);
+                            @Override
+                            public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
+                                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                                Log.e(TAG, "" + statusCode);
+                                Log.e(TAG, res.toString());
 
-                        }
+                            }
+                        });
 
-                        @Override
-                        public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
-                            // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                            Log.e(TAG, "" + statusCode);
-                            Log.e(TAG, res.toString());
-
-                        }
-                    });
-
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    } catch (UnsupportedEncodingException e){
+                        e.printStackTrace();
+                    }
 
                 }
             }
         } catch (JSONException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
 
@@ -129,16 +139,29 @@ public class LectureDetail extends Activity
         mRecyclerView = (RecyclerView) findViewById(R.id.sumList);
         mStaggeredLayoutManager = new StaggeredGridLayoutManager(1, StaggeredGridLayoutManager.VERTICAL);
         mRecyclerView.setLayoutManager(mStaggeredLayoutManager);
-        mAdapter = new SumListAdapter(sums, times);
+        mAdapter = new SumListAdapter(sums, contentID, times);
+        mAdapter.setOnItemClickListener(onItemClickListener);
         mRecyclerView.setAdapter(mAdapter);
 
 
-
     }
 
+    private final SumListAdapter.OnItemClickListener onItemClickListener = new SumListAdapter.OnItemClickListener() {
+        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+        @Override
+        public void onItemClick(View v, int position) {
+            try {
+                if (times.get(position) != null) {
+                    vid.seekTo((int) Double.parseDouble(times.get(position)) * 1000);
+                }
+                Log.e(TAG, "clicked " + position);
+            } catch (Exception e){
+                Log.e(TAG, e.toString());
+            }
+        }
+    };
 
-    public void addToTimes(double d){
-        times.add(d);
-    }
+
+
 
 }

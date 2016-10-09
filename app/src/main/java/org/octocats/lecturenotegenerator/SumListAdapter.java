@@ -1,15 +1,16 @@
 package org.octocats.lecturenotegenerator;
 
+import android.content.Context;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-
-import static android.content.ContentValues.TAG;
+import java.util.HashMap;
 
 /**
  * Created by nisarg on 9/10/16.
@@ -19,12 +20,15 @@ public class SumListAdapter extends RecyclerView.Adapter<SumListAdapter.ViewHold
 
     private OnItemClickListener mItemClickListener;
     private ArrayList<String> summaries = new ArrayList<>();
-    private ArrayList<Double> times = new ArrayList<>();
+    private HashMap<Integer,String> times = new HashMap<>();
+    private String contentID;
+    private Context mContext;
 
-    public SumListAdapter(ArrayList<String> summaries, ArrayList<Double> times){
+    public SumListAdapter(ArrayList<String> summaries, String contentID, HashMap<Integer,String> times){
         this.summaries = summaries;
+        this.contentID = contentID;
+        //this.mContext = mContext;
         this.times = times;
-        Log.e(TAG, times.toString());
     }
 
     @Override
@@ -34,11 +38,13 @@ public class SumListAdapter extends RecyclerView.Adapter<SumListAdapter.ViewHold
     }
 
     @Override
-    public void onBindViewHolder(SumListAdapter.ViewHolder holder, int position) {
+    public void onBindViewHolder(SumListAdapter.ViewHolder holder, final int position)  {
         holder.summary.setText(summaries.get(position));
-        if(position < times.size()){
-            holder.time.setText("" + times.get(position));
-        }
+
+
+        if(position < times.size())
+            holder.time.setText(""+Math.round(Double.parseDouble(times.get(position))));
+
     }
 
     @Override
@@ -49,12 +55,18 @@ public class SumListAdapter extends RecyclerView.Adapter<SumListAdapter.ViewHold
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         public final TextView time;
         public final TextView summary;
+        public final CardView cv;
+        public final LinearLayout summaryHolder;
 
 
         public ViewHolder(View itemView) {
             super(itemView);
+            cv = (CardView)itemView.findViewById(R.id.cv);
+            summaryHolder = (LinearLayout) itemView.findViewById(R.id.mainHolder);
             time = (TextView) itemView.findViewById(R.id.timeStamp);
             summary = (TextView) itemView.findViewById(R.id.textPoint);
+
+            summaryHolder.setOnClickListener(this);
         }
 
         @Override

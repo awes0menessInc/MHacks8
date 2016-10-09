@@ -46,8 +46,8 @@ public class MainActivity extends AppCompatActivity {
         mStaggeredLayoutManager = new StaggeredGridLayoutManager(1, StaggeredGridLayoutManager.VERTICAL);
         mRecyclerView.setLayoutManager(mStaggeredLayoutManager);
 
-        LecList.add(new Lecture("Test", new Date()));
-        LecList.add(new Lecture("Test 2", new Date()));
+        LecList.add(new Lecture("Concussions and Amnesia", new Date()));
+        LecList.add(new Lecture("Stephen Hawkings on God", new Date()));
 
         mAdapter = new LecListAdapter(LecList);
         mAdapter.setOnItemClickListener(onItemClickListener);

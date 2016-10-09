@@ -11,24 +11,34 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/cv"
-        card_view:contentPadding="8dp"
+        android:layout_margin="8dp"
         card_view:cardCornerRadius="@dimen/card_corner_radius"
         card_view:cardElevation="@dimen/card_elevation"
         >
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:weightSum="8">
+            android:weightSum="8"
+            android:id="@+id/mainHolder"
+            android:background="?android:selectableItemBackground"
+            >
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="3"
+        android:layout_weight="7"
+        android:paddingTop="@dimen/activity_horizontal_margin"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingBottom="@dimen/activity_horizontal_margin"
+
         android:id="@+id/timeStamp"
         android:text="0"/>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="5"
+        android:paddingTop="@dimen/activity_horizontal_margin"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingBottom="@dimen/activity_horizontal_margin"        android:layout_weight="1"
+        android:textAlignment="center"
         android:id="@+id/textPoint"
         android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."/>
         </LinearLayout>
