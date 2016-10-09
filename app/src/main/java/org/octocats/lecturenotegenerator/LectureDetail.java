@@ -88,8 +88,10 @@ public class LectureDetail extends Activity
                         public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
                             try {
                                 Log.e(TAG,""+response.toString());
-                                addToTimes(response.getDouble("startTime"));
+                                Log.e(TAG,""+response.getJSONArray("startTime").get(0));
+                                addToTimes(Double.parseDouble(response.getJSONArray("startTime").get(0).toString()));
                             } catch (JSONException e) {
+                                addToTimes(0.0);
                                 e.printStackTrace();
                             }
                         }
@@ -97,6 +99,7 @@ public class LectureDetail extends Activity
                         @Override
                         public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
                             // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                            addToTimes(0.0);
                             Log.e(TAG, "" + statusCode);
                             Log.e(TAG, res.toString());
 
