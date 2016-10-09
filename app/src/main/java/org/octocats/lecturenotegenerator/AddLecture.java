@@ -99,11 +99,6 @@ public class AddLecture extends AppCompatActivity {
                 // MEDIA GALLERY
                 String selectedImagePath = getPath(videoUri);
                 if (selectedImagePath != null) {
-
-                    /*Intent intent = new Intent(HomeActivity.this,
-                            VideoplayAvtivity.class);
-                    intent.putExtra("path", selectedImagePath);
-                    startActivity(intent);*/
                     File f = new File(selectedImagePath);
                     videoName = f.getName();
                     Log.e(TAG,videoName);
@@ -208,10 +203,102 @@ public class AddLecture extends AppCompatActivity {
                 String videoPath = getPath(videoUri);
                 File f = new File(videoPath);
                 videoName = f.getName();
+
+                AsyncHttpClient client = new AsyncHttpClient();
+                RequestParams params = new RequestParams();
+                try {
+                    params.put("userPhoto", f);
+                } catch(FileNotFoundException e) {}
+
+                client.post("http://nisarg.me:3000/api/photo", params, new AsyncHttpResponseHandler() {
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                        String str = "";
+                        try {
+                            str = new String(responseBody, "UTF-8");
+                        } catch (UnsupportedEncodingException e) {
+                            e.printStackTrace();
+                        }
+                        JSONObject json = new JSONObject();
+                        try {
+                            json = new JSONObject(str);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        String filename = "";
+                        try {
+                            Log.e(TAG, "success " + json.getString("filename"));
+                            filename = json.getString("filename");
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                        AsyncHttpClient client = new AsyncHttpClient();
+                        client.addHeader("Content-Type","application/json");
+                        RequestParams params = new RequestParams();
+
+                        JSONObject jsonParam = new JSONObject();
+                        try {
+                            jsonParam.put("action", "index_content");
+                            jsonParam.put("userID", USERID);
+                            jsonParam.put("data_url", "http://nisarg.me:3000/uploads/" + filename);
+                            StringEntity entity = new StringEntity(jsonParam.toString());
+                            Log.e(TAG, params.toString());
+
+                            client.post(getApplicationContext(), "http://api.deepgram.com/", entity, "application/json", new JsonHttpResponseHandler() {
+                                @Override
+                                public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                                    Log.e(TAG, response.toString());
+
+                                    AsyncHttpClient client = new AsyncHttpClient();
+                                    JSONObject jsonRes = null;
+                                    try {
+                                        jsonRes = new JSONObject(response.toString());
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+
+                                    JSONObject jsonParam = new JSONObject();
+                                    StringEntity entity = null;
+                                    try {
+                                        jsonParam.put("action", "get_object_status");
+                                        jsonParam.put("userID", USERID);
+                                        jsonParam.put("contentID", jsonRes.getString("contentID"));
+                                        entity = new StringEntity(jsonParam.toString());
+                                        final String contentID  = jsonRes.getString("contentID");
+
+                                        checkAPI(contentID);
+
+                                    } catch (Exception e){
+                                        Log.e(TAG, e.toString());
+                                    }
+
+                                }
+
+                                @Override
+                                public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
+                                    // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                                    Log.e(TAG, "" + statusCode);
+                                    Log.e(TAG, res.toString());
+
+                                }
+                            });
+                        } catch (Exception e) {
+                            Log.e(TAG, e.toString());
+                        }
+
+
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                        String str = "";
+
+                        Log.e(TAG, "fail " + error.toString());
+                    }
+                });
                 Log.e(TAG,videoName);
-
-
-
             }
         }
     }
@@ -309,33 +396,26 @@ public class AddLecture extends AppCompatActivity {
         paramMap.put("text",text);
         paramMap.put("sentences_percentage",30);
 
-        client.post(BASE_URL, paramMap, new AsyncHttpResponseHandler() {
+        client.post(BASE_URL, paramMap, new JsonHttpResponseHandler() {
             String str;
             @Override
-            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
 
-                try
-                {
-                    str = new String(responseBody, "UTF-8");
-
-                }
-                catch (UnsupportedEncodingException e)
-                {
-                    e.printStackTrace();
-                }
+                str = response.toString();
 
                 val[0] = str;
                 Log.e(TAG, "success" + str);
                 Intent i = new Intent(AddLecture.this, LectureDetail.class);
                 i.putExtra("FILENAME", videoName);
                 i.putExtra("URI", videoUri.toString());
+                i.putExtra("TEXT_SUMMARY", str);
                 ActivityCompat.startActivity(AddLecture.this, i, null
                 );
 
             }
 
             @Override
-            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+            public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
                 Log.e(TAG, "failure" + str);
             }
         });
