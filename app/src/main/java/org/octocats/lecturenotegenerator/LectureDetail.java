@@ -1,6 +1,7 @@
 package org.octocats.lecturenotegenerator;
 
 import android.app.Activity;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.MediaController;
 import android.widget.VideoView;
@@ -16,17 +17,12 @@ public class LectureDetail extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.lecturedetailactivity);
 
-        String value;
         Bundle extras = getIntent().getExtras();
-        if (extras != null)
-        {
-            value = extras.get("key").toString();
-        }
-        else
-            value = null;
+        String value = extras.getString("URI");
+
 
         VideoView vid = (VideoView) findViewById(R.id.videoView);
-        vid.setVideoPath(value);
+        vid.setVideoURI(Uri.parse(value));
         vid.setMediaController(new MediaController(this));
         vid.start();
 

@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -40,6 +41,10 @@ public class AddLecture extends AppCompatActivity {
 
     private EditText title;
     private String titleTxt = "";
+    private String videoName="";
+    private Uri videoUri;
+
+    private static String USERID = "1476010302-f9f306e3-773b-4252-832e-dd09172f02f4-1946553840890124384591255084455";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,13 +91,13 @@ public class AddLecture extends AppCompatActivity {
         Log.e(TAG,data.getDataString());
         if (resultCode == RESULT_OK) {
             if (requestCode == REQUEST_TAKE_GALLERY_VIDEO) {
-                Uri selectedImageUri = data.getData();
+                videoUri = data.getData();
 
                 // OI FILE Manager
-                final String filemanagerstring = selectedImageUri.getPath();
+                final String filemanagerstring = videoUri.getPath();
 
                 // MEDIA GALLERY
-                String selectedImagePath = getPath(selectedImageUri);
+                String selectedImagePath = getPath(videoUri);
                 if (selectedImagePath != null) {
 
                     /*Intent intent = new Intent(HomeActivity.this,
@@ -100,8 +105,8 @@ public class AddLecture extends AppCompatActivity {
                     intent.putExtra("path", selectedImagePath);
                     startActivity(intent);*/
                     File f = new File(selectedImagePath);
-                    String imageName = f.getName();
-                    Log.e(TAG,"lk"+imageName);
+                    videoName = f.getName();
+                    Log.e(TAG,videoName);
 
                     AsyncHttpClient client = new AsyncHttpClient();
                     RequestParams params = new RequestParams();
@@ -140,7 +145,7 @@ public class AddLecture extends AppCompatActivity {
                             JSONObject jsonParam = new JSONObject();
                             try {
                                 jsonParam.put("action", "index_content");
-                                jsonParam.put("userID", "1475952683-484e4700-3a91-4ee3-8344-125b3f259469-8693430633199653278155461417427");
+                                jsonParam.put("userID", USERID);
                                 jsonParam.put("data_url", "http://nisarg.me:3000/uploads/" + filename);
                                 StringEntity entity = new StringEntity(jsonParam.toString());
                                 Log.e(TAG, params.toString());
@@ -162,7 +167,7 @@ public class AddLecture extends AppCompatActivity {
                                         StringEntity entity = null;
                                         try {
                                             jsonParam.put("action", "get_object_status");
-                                            jsonParam.put("userID", "1475952683-484e4700-3a91-4ee3-8344-125b3f259469-8693430633199653278155461417427");
+                                            jsonParam.put("userID", USERID);
                                             jsonParam.put("contentID", jsonRes.getString("contentID"));
                                             entity = new StringEntity(jsonParam.toString());
                                             final String contentID  = jsonRes.getString("contentID");
@@ -199,10 +204,11 @@ public class AddLecture extends AppCompatActivity {
                     });
                 }
             } else if(requestCode == REQUEST_VIDEO_CAPTURE){
-                String videoPath = getPath(data.getData());
+                videoUri = data.getData();
+                String videoPath = getPath(videoUri);
                 File f = new File(videoPath);
-                String imageName = f.getName();
-                Log.e(TAG,imageName);
+                videoName = f.getName();
+                Log.e(TAG,videoName);
 
 
 
@@ -218,7 +224,7 @@ public class AddLecture extends AppCompatActivity {
         StringEntity entity = null;
 
         jsonParam.put("action", "get_object_status");
-        jsonParam.put("userID", "1475952683-484e4700-3a91-4ee3-8344-125b3f259469-8693430633199653278155461417427");
+        jsonParam.put("userID", USERID);
         jsonParam.put("contentID", contentID);
         entity = new StringEntity(jsonParam.toString());
 
@@ -229,10 +235,13 @@ public class AddLecture extends AppCompatActivity {
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
                 Log.e(TAG, response.toString());
                 try {
-                    if (!response.getString("status").equals("done")) {
+                    if(response.getString("status").equals("failed_fetch")) {
+                        Log.e(TAG, "FAIL");
+                    } else if (!response.getString("status").equals("done")) {
                         TimeUnit.SECONDS.sleep(10);
                         checkAPI(contentIDCopy);
-                    } else {
+                    }
+                    else {
                         getTranscript(contentIDCopy);
                     }
                 } catch (Exception e) {
@@ -255,7 +264,7 @@ public class AddLecture extends AppCompatActivity {
         AsyncHttpClient client = new AsyncHttpClient();
         JSONObject jsonParam = new JSONObject();
         jsonParam.put("action", "get_object_transcript");
-        jsonParam.put("userID", "1475952683-484e4700-3a91-4ee3-8344-125b3f259469-8693430633199653278155461417427");
+        jsonParam.put("userID", USERID);
         jsonParam.put("contentID", contentID);
         StringEntity entity = new StringEntity(jsonParam.toString());
 
@@ -263,6 +272,7 @@ public class AddLecture extends AppCompatActivity {
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
                 try {
+                    Log.e(TAG, response.toString());
                     String txt = "";
                     for(int i = 0; i < response.getJSONArray("paragraphs").length(); i++){
                         txt += response.getJSONArray("paragraphs").get(i).toString();
@@ -284,47 +294,7 @@ public class AddLecture extends AppCompatActivity {
         });
     }
 
-    /*public boolean checkStatus(final AsyncHttpClient client, final JSONObject jsonRes) {
-        JSONObject jsonParam = new JSONObject();
-        StringEntity entity = null;
-        try {
-            jsonParam.put("action", "get_object_status");
-            jsonParam.put("userID", "1475952683-484e4700-3a91-4ee3-8344-125b3f259469-8693430633199653278155461417427");
-            jsonParam.put("contentID", jsonRes.getString("contentID"));
-            entity = new StringEntity(jsonParam.toString());
-            final Boolean[] done = new Boolean[1];
 
-
-            client.post(getApplicationContext(), "http://api.deepgram.com/", entity, "application/json", new JsonHttpResponseHandler() {
-                @Override
-                public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                    Log.e(TAG, response.toString());
-                    try {
-                        if (response.getString("status").equals("")) {
-                            TimeUnit.SECONDS.sleep(10);
-                            if (checkStatus(client, jsonRes));
-                        } else {
-                            done[0] = new Boolean(true);
-                        }
-                    } catch (Exception e) {
-                        Log.e(TAG, e.toString());
-                    }
-                }
-
-                @Override
-                public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
-                    // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                    Log.e(TAG, "" + statusCode);
-                    Log.e(TAG, res.toString());
-
-                }
-            });
-            return done[0];
-        } catch (Exception e){
-            Log.e(TAG, e.toString());
-        }
-    }
-    */
 
     public String getSummary(String title, String text)/* throws Exception */{
         final String BASE_URL = "https://api.aylien.com/api/v1/summarize";
@@ -344,14 +314,24 @@ public class AddLecture extends AppCompatActivity {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
 
-                try {
+                try
+                {
                     str = new String(responseBody, "UTF-8");
-                } catch (UnsupportedEncodingException e) {
+
+                }
+                catch (UnsupportedEncodingException e)
+                {
                     e.printStackTrace();
                 }
 
                 val[0] = str;
                 Log.e(TAG, "success" + str);
+                Intent i = new Intent(AddLecture.this, LectureDetail.class);
+                i.putExtra("FILENAME", videoName);
+                i.putExtra("URI", videoUri.toString());
+                ActivityCompat.startActivity(AddLecture.this, i, null
+                );
+
             }
 
             @Override
