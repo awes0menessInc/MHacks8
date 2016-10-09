@@ -50,5 +50,14 @@
         style="@style/Widget.AppCompat.Button.Colored"
         />
 
+    <ProgressBar
+        android:id="@+id/pbHeaderProgress"
+
+        android:layout_width="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_gravity="center_horizontal"
+        android:layout_height="wrap_content" >
+    </ProgressBar>
+
 
 </LinearLayout>

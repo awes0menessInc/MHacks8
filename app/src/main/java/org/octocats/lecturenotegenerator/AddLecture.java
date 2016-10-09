@@ -1,5 +1,6 @@
 package org.octocats.lecturenotegenerator;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -190,6 +191,8 @@ public class AddLecture extends AppCompatActivity {
 
                                     }
                                 });
+                                ProgressDialog dialog = ProgressDialog.show(AddLecture.this, "",
+                                        "Loading. Please wait...", true);
                             } catch (Exception e) {
                                 Log.e(TAG, e.toString());
                             }
